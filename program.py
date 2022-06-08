@@ -1,19 +1,12 @@
 import os
 
-def openFile():
-    try:
-        os.startfile('hi.txt')
 
-    except:
-        print("oops")
-
-def closeFile():
+def closeFile(filename):
     try:
-        os.system('TASKKILL /F /IM firefox.exe')
+        os.system('TASKKILL /F /IM '+ filename)
 
     except:
         print("oops")
 
 
-
-closeFile()
+closeFile("firefox.exe")
