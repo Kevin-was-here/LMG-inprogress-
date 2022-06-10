@@ -1,5 +1,7 @@
 import time
 import subprocess
+import PySimpleGUI as sg
+import os
 
 """
 Function takes a executable name and forcefully murders it
@@ -43,8 +45,17 @@ def execute():
     for i in progList:
         executeprog(i)
     
-    
+#main
 
+#building a GUI
+winLayout =  [[sg.Text("Hello from PysimpelGuI")],[sg.Button("close")]]
+window = sg.Window("DO YOUR WORK!!", winLayout)
+#t = input("Enter how many seconds you want to work for: ")
+#timeToWork(int(t))
 
-t = input("Enter how many seconds you want to work for: ")
-timeToWork(int(t))
+while True:
+    event, values = window.read()
+    if event == "close" or event == sg.WIN_CLOSED:
+        break
+
+window.close()
