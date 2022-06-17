@@ -46,7 +46,7 @@ def timeToWork(t):
         window['text'].update("Time left: " + timer)
         execute()
         #for when program is closed mid timer
-        if event == "close" or event == sg.WIN_CLOSED:
+        if event == "Close" or event == sg.WIN_CLOSED:
             window.close()
             break
     
@@ -70,10 +70,10 @@ progList = cleanup(os.popen('wmic process get description, processid').read().sp
 #building a GUI
 winLayout = [
     [sg.Text("Please enter how long you want to work for: ", key="text")],
-    [sg.InputText()],
+    [sg.InputText(key="timeInput")],
     [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
     [sg.Text("Current items being murdered")],
-    [sg.Listbox(values=killList, select_mode='extended', key='fac', size=(30, 6))]
+    [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
 ]
 
 window = sg.Window("DO YOUR WORK!!", winLayout)
@@ -85,7 +85,7 @@ while True:
     if event == "Close" or event == sg.WIN_CLOSED:
         break
     elif event == "Start Timer":
-        t = values[0]
+        t = values["timeInput"]
         timeToWork(int(t))
     elif event == "Add Death":
         window.close()
@@ -93,8 +93,27 @@ while True:
             [sg.Text("Select the items to be killed: ", key="text")],
             [sg.Listbox(values=progList, select_mode='extended', key='prog', size=(30, 15)), 
             sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 15))],
-            [sg.Button("Back to Timer"),sg.Button("Add to Death"),sg.Button("Remove Death"), sg.Button("Close")]
+            [sg.Button("Back to Timer"),sg.Button("Add"),sg.Button("Remove"), sg.Button("Close")]
         ]
         window = sg.Window("DO YOUR WORK!!", layout)
+    elif event == "Back to Timer":
+        window.close()
+        #reset layouts as a work around to PSG's do not reuse layout rule
+        newLayout = [
+            [sg.Text("Please enter how long you want to work for: ", key="text")],
+            [sg.InputText(key="timeInput", size=(30))],
+            [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
+            [sg.Text("Current items being murdered")],
+            [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
+        ]
+        window = sg.Window("DO YOUR WORK!!", newLayout)
+    elif event == "Add":
+        for i in values['prog']:
+            killList.append(i)
+            window['death'].update(values=killList)
+    elif event == "Remove":
+        for i in values['death']:
+            killList.remove(i)
+            window['death'].update(values=killList)
 
 window.close()
