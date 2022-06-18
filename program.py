@@ -1,10 +1,23 @@
-from ctypes import alignment
-from operator import mod
-from select import select
+
 import time
 import subprocess
 import PySimpleGUI as sg
 import os
+
+deathToAll = False
+killList = ["chrome.exe"]
+
+def execute():
+    """
+    Kill function execute program
+    pre: none
+    post: none
+    """
+    for i in killList:
+        try:
+            subprocess.run('TASKKILL /F /IM '+ i, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        except:
+            print("oops")
 
 def cleanup(progList):
     temp = []
@@ -12,29 +25,20 @@ def cleanup(progList):
         if ".exe" in i:
             if not(i in temp):
                 temp.append(i)
+    temp.sort()
     return temp
 
-def executeprog(progname):
-    """
-    Function takes a executable name and forcefully murders it
-
-    Pre: Filename
-    post: none
-    """
-    try:
-        subprocess.run('TASKKILL /F /IM '+ progname, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    except:
-        print("oops")
-
-def timeToWork(t):
+def timeToWork(t, window):
     """
     Timer function takes the seconds and runs a countdown timer, displays the number of seconds remaining
 
-    pre: timer in seconds
+    pre: timer in seconds, timer window
     post: none
     """
+    global deathToAll
     currTime = int(time.time())
     endTime = currTime + t
+    listUpdate = True
     while endTime > currTime:
         #update time
         currTime = int(time.time())
@@ -42,78 +46,116 @@ def timeToWork(t):
         mins = t // 60
         secs = t % 60
         timer = '{:02d}:{:02d}'.format(mins, secs)
-        event, values = window.read(timeout=10)
-        window['text'].update("Time left: " + timer)
+        event, values = window.read(timeout=1)
+        if listUpdate:
+            window['death'].update(values=killList)
+            listUpdate = False
+        window.un_hide()
+        window['timeText'].update("Time left: " + timer)
         execute()
         #for when program is closed mid timer
         if event == "Close" or event == sg.WIN_CLOSED:
             window.close()
+            deathToAll = True
+            break
+        if event == "goHome":
+            window.hide()
             break
     
-    window['text'].update("Time is up congrats")
+    if endTime <= currTime:
+        window["timeText"].update("Congrats you're done good work!")
+        window["goHome"].update(text="Back to Home")
+        while True:
+            event, values = window.read()
+            if event == "Close" or event == sg.WIN_CLOSED:
+                window.close()
+                deathToAll = True
+                break
+            if event == "goHome":
+                window.hide()
+                break
 
-def execute():
-    """
-    Kill function checks for if a program is open and sends the program name to be executed
-    pre: none
-    post: none
-    """
-    for i in killList:
-        executeprog(i)
+def editDeadProgram(window):
+    global killList, deathToAll
+
+    while True:
+        event, values = window.read(timeout=1)
+        window.un_hide()
+        if event == "Close" or event == sg.WIN_CLOSED:
+            deathToAll = True
+            break
+        elif event == "Back to Home":
+                window.hide()
+                break
+        elif event == "Add":
+            for i in values['prog']:
+                if not(i in killList):
+                    killList.append(i)
+                    killList.sort()
+                    window['death'].update(values=killList)
+        elif event == "Remove":
+            for i in values['death']:
+                killList.remove(i)
+                window['death'].update(values=killList)
+        elif event == "Refresh":
+            window['prog'].update(values=(cleanup(os.popen('wmic process get description, processid').read().split())))
+
+
+if __name__ == '__main__':
     
-#main
-killList = ["Minecraft.exe","RiotClientUx.exe",
-                "BootstrapPackagedGame","VALORANT-Win64-Shipping.exe"]
+    progList = cleanup(os.popen('wmic process get description, processid').read().split())
 
-progList = cleanup(os.popen('wmic process get description, processid').read().split())
+    #-------------------GUI layouts--------------------------
+    homeLayout = [
+        [sg.Text("Enter the time you want to work for: (in seconds)", key="text")],
+        [sg.InputText(key="timeInput", size=(30))],
+        [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
+        [sg.Text("Current items being murdered")],
+        [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
+    ]
 
-#building a GUI
-winLayout = [
-    [sg.Text("Please enter how long you want to work for: ", key="text")],
-    [sg.InputText(key="timeInput")],
-    [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
-    [sg.Text("Current items being murdered")],
-    [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
-]
+    timeLayout = [
+        [sg.Text("hmm", key="timeText")],
+        [sg.Button("Stop Timer",key="goHome"), sg.Button("Close")],
+        [sg.Text("Current items being murdered")],
+        [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
+    ]
 
-window = sg.Window("DO YOUR WORK!!", winLayout)
-#t = input("Enter how many seconds you want to work for: ")
-#timeToWork(int(t))
+    editLayout = [
+        [sg.Text("Select the items to be killed: ")],
+        [sg.Listbox(values=progList, select_mode='extended', key='prog', size=(30, 15)), 
+        sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 15))],
+        [sg.Button("Back to Home"),sg.Button("Refresh"),sg.Button("Add"),sg.Button("Remove"), sg.Button("Close")]
+    ]
 
-while True:
-    event, values = window.read()
-    if event == "Close" or event == sg.WIN_CLOSED:
-        break
-    elif event == "Start Timer":
-        t = values["timeInput"]
-        timeToWork(int(t))
-    elif event == "Add Death":
-        window.close()
-        layout = [
-            [sg.Text("Select the items to be killed: ", key="text")],
-            [sg.Listbox(values=progList, select_mode='extended', key='prog', size=(30, 15)), 
-            sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 15))],
-            [sg.Button("Back to Timer"),sg.Button("Add"),sg.Button("Remove"), sg.Button("Close")]
-        ]
-        window = sg.Window("DO YOUR WORK!!", layout)
-    elif event == "Back to Timer":
-        window.close()
-        #reset layouts as a work around to PSG's do not reuse layout rule
-        newLayout = [
-            [sg.Text("Please enter how long you want to work for: ", key="text")],
-            [sg.InputText(key="timeInput", size=(30))],
-            [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
-            [sg.Text("Current items being murdered")],
-            [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
-        ]
-        window = sg.Window("DO YOUR WORK!!", newLayout)
-    elif event == "Add":
-        for i in values['prog']:
-            killList.append(i)
-            window['death'].update(values=killList)
-    elif event == "Remove":
-        for i in values['death']:
-            killList.remove(i)
-            window['death'].update(values=killList)
+    window1 = sg.Window("DO YOUR WORK!!", homeLayout, size=(325,250))
+    window2 = sg.Window("DO YOUR WORK!!", timeLayout)
+    window3 = sg.Window("DO YOUR WORK!!", editLayout)
 
-window.close()
+    while True:
+        event, values = window1.read()
+        if event == "Close" or event == sg.WIN_CLOSED:
+            break
+        elif event == "Start Timer":
+            t = values["timeInput"]
+            if(t.isdigit()):
+                window1.hide()
+                timeToWork(int(t), window2)
+                if deathToAll == True:
+                    break
+                window1.un_hide()
+            else:
+                window1["text"].update("Please enter a proper number (in seconds): ")
+        elif event == "Add Death":
+            window1.hide()
+            editDeadProgram(window3)
+            if deathToAll == True:
+                break
+            window1['death'].update(values=killList)
+            window3['death'].update(values=killList)
+            window1.un_hide()
+        
+    print("program End")
+    window1.close()
+    window2.close()
+    window3.close()
