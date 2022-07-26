@@ -103,7 +103,7 @@ def editDeadProgram(window):
 def main():
     progList = cleanup(os.popen('wmic process get description, processid').read().split())
     readFile()
-
+    open('killList.txt', 'w').close()
     #-------------------GUI layouts--------------------------
     homeLayout = [
         [sg.Text("Enter the time you want to work for: (in seconds)", key="text")],
@@ -161,35 +161,18 @@ def main():
     window3.close()
 
 def readFile():
+  global killList
   f = open("killList.txt",'r')
-  for line in f:
-    
-    killList.append(line)
+  killList = f.readline().split()
   killList.sort()
   f.close()
 
 def addtoFile():
-  open('killList.txt', 'w').close()
-  f = open("killList.txt","r+")
-  f.truncate(0)
-  appendEOL = False
-  # Move read cursor to the start of file.
-  f.seek(0)
-  # Check if file is not empty
-  data = f.read(100)
-  if len(data) > 0:
-    appendEOL = True
-  # Iterate over each string in the list
-  for line in killList:
-    # If file is not empty then append '\n' before first line for
-    # other lines always append '\n' before appending line
-    if appendEOL == True:
-      f.write("\n")
-    else:
-      appendEOL = True
-    # Append element at the end of file
-    f.write(line)
-  f.close()
+  open(r"C:\Users\kloak\Desktop\Programming\LMG\killList.txt", 'w').close()
+  with open(r"C:\Users\kloak\Desktop\Programming\LMG\killList.txt", 'wt') as fp:
+        # write each item on a new line
+    fp.write(' '.join(str(line) for line in killList))
+  fp.close()
 
 
 if __name__ == '__main__':
