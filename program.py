@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import os
 
 deathToAll = False
-killList = ["chrome.exe"]
+killList = []
 
 def execute():
     """
@@ -100,10 +100,9 @@ def editDeadProgram(window):
         elif event == "Refresh":
             window['prog'].update(values=(cleanup(os.popen('wmic process get description, processid').read().split())))
 
-
-if __name__ == '__main__':
-    
+def main():
     progList = cleanup(os.popen('wmic process get description, processid').read().split())
+    readFile()
 
     #-------------------GUI layouts--------------------------
     homeLayout = [
@@ -156,6 +155,42 @@ if __name__ == '__main__':
             window1.un_hide()
         
     print("program End")
+    addtoFile()
     window1.close()
     window2.close()
     window3.close()
+
+def readFile():
+  f = open("killList.txt",'r')
+  for line in f:
+    
+    killList.append(line)
+  killList.sort()
+  f.close()
+
+def addtoFile():
+  open('killList.txt', 'w').close()
+  f = open("killList.txt","r+")
+  f.truncate(0)
+  appendEOL = False
+  # Move read cursor to the start of file.
+  f.seek(0)
+  # Check if file is not empty
+  data = f.read(100)
+  if len(data) > 0:
+    appendEOL = True
+  # Iterate over each string in the list
+  for line in killList:
+    # If file is not empty then append '\n' before first line for
+    # other lines always append '\n' before appending line
+    if appendEOL == True:
+      f.write("\n")
+    else:
+      appendEOL = True
+    # Append element at the end of file
+    f.write(line)
+  f.close()
+
+
+if __name__ == '__main__':
+  main()
