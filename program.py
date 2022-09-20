@@ -37,51 +37,56 @@ def cleanup(progList):
   return temp
 
 def timeToWork(t, window):
-    """
-    Timer function takes the seconds and runs a countdown timer, displays the number of seconds remaining
+  """
+  Timer function takes the seconds and runs a countdown timer, displays the number of seconds remaining
 
-    pre: timer in seconds, timer window
-    post: none
-    """
-    global endProgram
-    currTime = int(time.time())
-    endTime = currTime + t
-    listUpdate = True
-    while endTime > currTime:
-        #update time
-        currTime = int(time.time())
-        t = endTime - currTime
-        mins = t // 60
-        secs = t % 60
-        timer = '{:02d}:{:02d}'.format(mins, secs)
-        event, values = window.read(timeout=1)
-        if listUpdate:
-            window['death'].update(values=blockList)
-            listUpdate = False
-        window.un_hide()
-        window['timeText'].update("Time left: " + timer)
-        execute()
-        #for when program is closed mid timer
-        if event == "Close" or event == sg.WIN_CLOSED:
-            window.close()
-            endProgram = True
-            break
-        if event == "goHome":
-            window.hide()
-            break
+  pre: timer in seconds, timer window
+  post: none
+  """
+  global endProgram   #var for user ending program mid session
+  currTime = int(time.time()) #get current time
+  endTime = currTime + t  #get end time
+  listUpdate = True #bool to update list
+  while endTime > currTime:
+    #update time
+    currTime = int(time.time()) #get new curr time
+    t = endTime - currTime  #get new time
+
+    #update time on timer
+    mins = t // 60
+    secs = t % 60
+    timer = '{:02d}:{:02d}'.format(mins, secs)
+    event, values = window.read(timeout=1)
+
+    #update list if necessary
+    if listUpdate:
+        window['death'].update(values=blockList)
+        listUpdate = False
+    window.un_hide() #reveal time window
+    window['timeText'].update("Time left: " + timer) #update text
+    execute()
     
-    if endTime <= currTime:
-        window["timeText"].update("Congrats you're done good work!")
-        window["goHome"].update(text="Back to Home")
-        while True:
-            event, values = window.read()
-            if event == "Close" or event == sg.WIN_CLOSED:
-                window.close()
-                endProgram = True
-                break
-            if event == "goHome":
-                window.hide()
-                break
+    #for when program is closed mid timer
+    if event == "Close" or event == sg.WIN_CLOSED:
+        window.close()
+        endProgram = True
+        break
+    if event == "goHome":
+        window.hide()
+        break
+  
+  if endTime <= currTime:
+      window["timeText"].update("Congrats you're done good work!")
+      window["goHome"].update(text="Back to Home")
+      while True:
+          event, values = window.read()
+          if event == "Close" or event == sg.WIN_CLOSED:
+              window.close()
+              endProgram = True
+              break
+          if event == "goHome":
+              window.hide()
+              break
 
 def editDeadProgram(window):
     global blockList, endProgram
