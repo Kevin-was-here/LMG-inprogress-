@@ -1,32 +1,40 @@
-
 import time
 import subprocess
 import PySimpleGUI as sg
 import os
 
-deathToAll = False
+endProgram = False
 killList = []
 
 def execute():
-    """
-    Kill function execute program
-    pre: none
-    post: none
-    """
-    for i in killList:
-        try:
-            subprocess.run('TASKKILL /F /IM '+ i, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        except:
-            print("oops")
+  """
+  Kill function execute program
+  pre: none
+  post: none
+  """
+  for i in killList: 
+      try: #Kill tasks that are in the killlist
+          subprocess.run('TASKKILL /F /IM '+ i, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+      except:
+          print("oops")
 
 def cleanup(progList):
-    temp = []
-    for i in progList:
-        if ".exe" in i:
-            if not(i in temp):
-                temp.append(i)
-    temp.sort()
-    return temp
+  """
+  Cleans up the program list from OS since it was obtained in wacky notation.
+  pre:
+    Proglist --> program list
+  post:
+    sorted program list
+  """
+  temp = []
+  for i in progList: #loop through list
+      if ".exe" in i:  
+        #extract only programs with .exe (literally almost all of them)
+        #probably shouldn't remove them if they don't have .exe anyway
+          if not(i in temp):
+              temp.append(i)
+  temp.sort() #sort by alphabet
+  return temp
 
 def timeToWork(t, window):
     """
@@ -35,7 +43,7 @@ def timeToWork(t, window):
     pre: timer in seconds, timer window
     post: none
     """
-    global deathToAll
+    global endProgram
     currTime = int(time.time())
     endTime = currTime + t
     listUpdate = True
@@ -56,7 +64,7 @@ def timeToWork(t, window):
         #for when program is closed mid timer
         if event == "Close" or event == sg.WIN_CLOSED:
             window.close()
-            deathToAll = True
+            endProgram = True
             break
         if event == "goHome":
             window.hide()
@@ -69,20 +77,20 @@ def timeToWork(t, window):
             event, values = window.read()
             if event == "Close" or event == sg.WIN_CLOSED:
                 window.close()
-                deathToAll = True
+                endProgram = True
                 break
             if event == "goHome":
                 window.hide()
                 break
 
 def editDeadProgram(window):
-    global killList, deathToAll
+    global killList, endProgram
 
     while True:
         event, values = window.read(timeout=1)
         window.un_hide()
         if event == "Close" or event == sg.WIN_CLOSED:
-            deathToAll = True
+            endProgram = True
             break
         elif event == "Back to Home":
                 window.hide()
@@ -108,7 +116,7 @@ def main():
     homeLayout = [
         [sg.Text("Enter the time you want to work for: (in seconds)", key="text")],
         [sg.InputText(key="timeInput", size=(30))],
-        [sg.Button("Start Timer"),sg.Button("Add Death"), sg.Button("Close")],
+        [sg.Button("Start Timer"),sg.Button("Update Blocklist"), sg.Button("Close")],
         [sg.Text("Current items being murdered")],
         [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
     ]
@@ -121,7 +129,7 @@ def main():
     ]
 
     editLayout = [
-        [sg.Text("Select the items to be killed: ")],
+        [sg.Text("Select the items to be blocked: ")],
         [sg.Listbox(values=progList, select_mode='extended', key='prog', size=(30, 15)), 
         sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 15))],
         [sg.Button("Back to Home"),sg.Button("Refresh"),sg.Button("Add"),sg.Button("Remove"), sg.Button("Close")]
@@ -140,15 +148,15 @@ def main():
             if(t.isdigit()):
                 window1.hide()
                 timeToWork(int(t), window2)
-                if deathToAll == True:
+                if endProgram == True:
                     break
                 window1.un_hide()
             else:
                 window1["text"].update("Please enter a proper number (in seconds): ")
-        elif event == "Add Death":
+        elif event == "Update Blocklist":
             window1.hide()
             editDeadProgram(window3)
-            if deathToAll == True:
+            if endProgram == True:
                 break
             window1['death'].update(values=killList)
             window3['death'].update(values=killList)
