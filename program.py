@@ -4,7 +4,7 @@ import PySimpleGUI as sg
 import os
 
 endProgram = False
-killList = []
+blockList = []
 
 def execute():
   """
@@ -12,8 +12,8 @@ def execute():
   pre: none
   post: none
   """
-  for i in killList: 
-      try: #Kill tasks that are in the killlist
+  for i in blockList: 
+      try: #Kill tasks that are in the blockList
           subprocess.run('TASKKILL /F /IM '+ i, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
       except:
           print("oops")
@@ -56,7 +56,7 @@ def timeToWork(t, window):
         timer = '{:02d}:{:02d}'.format(mins, secs)
         event, values = window.read(timeout=1)
         if listUpdate:
-            window['death'].update(values=killList)
+            window['death'].update(values=blockList)
             listUpdate = False
         window.un_hide()
         window['timeText'].update("Time left: " + timer)
@@ -84,7 +84,7 @@ def timeToWork(t, window):
                 break
 
 def editDeadProgram(window):
-    global killList, endProgram
+    global blockList, endProgram
 
     while True:
         event, values = window.read(timeout=1)
@@ -97,41 +97,41 @@ def editDeadProgram(window):
                 break
         elif event == "Add":
             for i in values['prog']:
-                if not(i in killList):
-                    killList.append(i)
-                    killList.sort()
-                    window['death'].update(values=killList)
+                if not(i in blockList):
+                    blockList.append(i)
+                    blockList.sort()
+                    window['death'].update(values=blockList)
         elif event == "Remove":
             for i in values['death']:
-                killList.remove(i)
-                window['death'].update(values=killList)
+                blockList.remove(i)
+                window['death'].update(values=blockList)
         elif event == "Refresh":
             window['prog'].update(values=(cleanup(os.popen('wmic process get description, processid').read().split())))
 
 def main():
     progList = cleanup(os.popen('wmic process get description, processid').read().split())
     readFile()
-    open('killList.txt', 'w').close()
+    open('blockList.txt', 'w').close()
     #-------------------GUI layouts--------------------------
     homeLayout = [
         [sg.Text("Enter the time you want to work for: (in seconds)", key="text")],
         [sg.InputText(key="timeInput", size=(30))],
         [sg.Button("Start Timer"),sg.Button("Update Blocklist"), sg.Button("Close")],
-        [sg.Text("Current items being murdered")],
-        [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
+        [sg.Text("Current items being blocked")],
+        [sg.Listbox(values=blockList, select_mode='extended', key='death', size=(30, 6))]
     ]
 
     timeLayout = [
         [sg.Text("hmm", key="timeText")],
         [sg.Button("Stop Timer",key="goHome"), sg.Button("Close")],
         [sg.Text("Current items being murdered")],
-        [sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 6))]
+        [sg.Listbox(values=blockList, select_mode='extended', key='death', size=(30, 6))]
     ]
 
     editLayout = [
         [sg.Text("Select the items to be blocked: ")],
         [sg.Listbox(values=progList, select_mode='extended', key='prog', size=(30, 15)), 
-        sg.Listbox(values=killList, select_mode='extended', key='death', size=(30, 15))],
+        sg.Listbox(values=blockList, select_mode='extended', key='death', size=(30, 15))],
         [sg.Button("Back to Home"),sg.Button("Refresh"),sg.Button("Add"),sg.Button("Remove"), sg.Button("Close")]
     ]
 
@@ -158,8 +158,8 @@ def main():
             editDeadProgram(window3)
             if endProgram == True:
                 break
-            window1['death'].update(values=killList)
-            window3['death'].update(values=killList)
+            window1['death'].update(values=blockList)
+            window3['death'].update(values=blockList)
             window1.un_hide()
         
     print("program End")
@@ -169,17 +169,17 @@ def main():
     window3.close()
 
 def readFile():
-  global killList
-  f = open("killList.txt",'r')
-  killList = f.readline().split()
-  killList.sort()
+  global blockList
+  f = open("blockList.txt",'r')
+  blockList = f.readline().split()
+  blockList.sort()
   f.close()
 
 def addtoFile():
-  open(r"C:\Users\kloak\Desktop\Programming\LMG\killList.txt", 'w').close()
-  with open(r"C:\Users\kloak\Desktop\Programming\LMG\killList.txt", 'wt') as fp:
+  open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'w').close()
+  with open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'wt') as fp:
         # write each item on a new line
-    fp.write(' '.join(str(line) for line in killList))
+    fp.write(' '.join(str(line) for line in blockList))
   fp.close()
 
 
