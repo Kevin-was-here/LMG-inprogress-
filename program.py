@@ -127,7 +127,8 @@ def main():
   open('blockList.txt', 'w').close() #clear blocklist files (used for saving the blocklist later)
   #-------------------GUI layouts--------------------------
   """
-  Design decision to not 
+  Design decision to use 3 windows and use the .hide() and .un_hide() function from PySimpleGUI since
+  PySimpleGUI does not support re-opening a window that has been closed previously
   """
   homeLayout = [
       [sg.Text("Enter the time you want to work for: (in seconds)", key="text")],
@@ -157,45 +158,50 @@ def main():
 
 #------------------------------------------------------------------------
 
-  while True:
-      event, values = window1.read()
+  while True: 
+      event, values = window1.read() #start the home window
       if event == "Close" or event == sg.WIN_CLOSED:
-          break
-      elif event == "Start Timer":
-          t = values["timeInput"]
-          if(t.isdigit()):
-              window1.hide()
-              timeToWork(int(t), window2)
-              if endProgram == True:
-                  break
-              window1.un_hide()
-          else:
+          break #close window
+      elif event == "Start Timer": #trigger start timer
+          t = values["timeInput"] #read time input 
+          if(t.isdigit()): #proper time input
+              window1.hide() #hide home window
+              timeToWork(int(t), window2) #Trigger timer window
+              if endProgram == True: 
+                break   #incase window is closed/program is ended in timer in
+              window1.un_hide() #reveal home window (timer window till be closed in timeToWork func)
+          else: #time input was not a number
               window1["text"].update("Please enter a proper number (in seconds): ")
-      elif event == "Update Blocklist":
-          window1.hide()
-          editBlocklist(window3)
-          if endProgram == True:
+      elif event == "Update Blocklist": #trigger update blocklist
+          window1.hide() #hide home
+          editBlocklist(window3) #trigger edit blocklist window
+          if endProgram == True: #if program is closed during blocklist window should end prog
               break
-          window1['death'].update(values=blockList)
+          window1['death'].update(values=blockList) #update blocklist for both windows
           window3['death'].update(values=blockList)
-          window1.un_hide()
-      
+          window1.un_hide() #reveal home
+
+  #window closed = program end    
   print("program End")
-  addtoFile()
+  addtoFile() #store blocklist
+  #close all windows
   window1.close()
   window2.close()
   window3.close()
 
 def readFile():
+  #read all items from block list file
   global blockList
-  f = open("blockList.txt",'r')
-  blockList = f.readline().split()
+  f = open("blockList.txt",'r') 
+  blockList = f.readline().split() 
   blockList.sort()
   f.close()
 
 def addtoFile():
-  open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'w').close()
-  with open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'wt') as fp:
+  #TODO: This is kinda broken unless done with the method below, need more research.
+  #adding to blocklist
+  open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'w').close() #clear file
+  with open(r"C:\Users\kloak\Desktop\Programming\LMG\BlockList.txt", 'wt') as fp: #rewrite blocklist
         # write each item on a new line
     fp.write(' '.join(str(line) for line in blockList))
   fp.close()
